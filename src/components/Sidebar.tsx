@@ -24,9 +24,9 @@ const stocksNav = [
 ] as const;
 
 const indexNav = [
-  { label: "Option Clock", href: "#", icon: Clock, phase: 3 },
-  { label: "Option Apex", href: "#", icon: BarChart3, phase: 3 },
-  { label: "Index Mover", href: "#", icon: TrendingUp, phase: 3 },
+  { label: "Option Clock", href: "/option-clock", icon: Clock, phase: 3 },
+  { label: "Option Apex", href: "/option-apex", icon: BarChart3, phase: 3 },
+  { label: "Index Mover", href: "/index-mover", icon: TrendingUp, phase: 3 },
 ] as const;
 
 function NavGroup({
@@ -112,7 +112,7 @@ export function Sidebar() {
       <NavGroup title="Stocks" items={stocksNav} pathname={pathname} />
       <NavGroup title="Index" items={indexNav} pathname={pathname} />
       <div className="mt-auto px-3 pt-4 text-[10px] leading-relaxed text-muted">
-        Trade Desk ranks Enter / Wait setups from live confluence.
+        Trade Desk + Phase 3 index tools live. Always verify on chart.
       </div>
     </aside>
   );
