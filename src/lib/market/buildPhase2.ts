@@ -90,10 +90,12 @@ function buildSectorSummaries(quotes: StockQuote[]): SectorSummary[] {
     const totalTurnover = list.reduce((s, q) => s + turnover(q), 0);
     const advancers = list.filter((q) => q.changePercent > 0).length;
     const decliners = list.filter((q) => q.changePercent < 0).length;
-    const leaders = [...list]
+    const stocks = [...list]
+      .map(toSectorStock)
+      .sort((a, b) => b.changePercent - a.changePercent);
+    const leaders = [...stocks]
       .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent))
-      .slice(0, 5)
-      .map(toSectorStock);
+      .slice(0, 5);
 
     summaries.push({
       sector,
@@ -103,6 +105,7 @@ function buildSectorSummaries(quotes: StockQuote[]): SectorSummary[] {
       advancers,
       decliners,
       leaders,
+      stocks,
     });
   }
 

@@ -8,6 +8,8 @@ export interface SectorSummary {
   advancers: number;
   decliners: number;
   leaders: SectorStockRow[];
+  /** All stocks in sector, sorted by % change desc */
+  stocks: SectorStockRow[];
 }
 
 export interface SectorStockRow {
