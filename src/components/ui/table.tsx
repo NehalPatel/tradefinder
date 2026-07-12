@@ -36,7 +36,7 @@ export function Table({
               <th
                 key={col.key}
                 className={cn(
-                  "whitespace-nowrap px-3 py-2 font-medium",
+                  "whitespace-nowrap px-4 py-2.5 font-medium",
                   col.align === "right" && "text-right",
                 )}
               >
@@ -80,7 +80,7 @@ export function Td({
   return (
     <td
       className={cn(
-        "border-b border-border/60 px-3 py-1.5 whitespace-nowrap",
+        "border-b border-border/60 px-4 py-2 whitespace-nowrap",
         align === "right" && "text-right tabular-nums",
         className,
       )}

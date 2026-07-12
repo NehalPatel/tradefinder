@@ -26,7 +26,7 @@ function StatusBar() {
           : "Status Unknown";
 
   return (
-    <div className="mb-3 flex flex-wrap items-center gap-3 text-xs text-muted">
+    <div className="mb-4 flex flex-wrap items-center gap-3 text-xs text-muted">
       <h1 className="mr-auto text-sm font-semibold text-foreground">
         Market Pulse
       </h1>
@@ -77,39 +77,25 @@ export function ScannerGrid() {
   const pulse = data ?? empty;
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col p-3 md:p-4">
+    <div className="flex min-h-0 flex-1 flex-col p-4 md:p-6">
       <StatusBar />
       {isLoading && !data && (
-        <p className="mb-3 text-xs text-muted">
+        <p className="mb-4 text-xs text-muted">
           Fetching live NSE quotes for the F&amp;O universe…
         </p>
       )}
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 xl:grid-cols-3 2xl:grid-cols-4">
-        <div className="xl:col-span-1 2xl:col-span-1">
-          <BreakoutBeacon
-            rows={pulse.breakouts}
-            source={data?.breakoutsSource}
-            sessionDate={data?.breakoutsSessionDate}
-          />
-        </div>
-        <div className="xl:col-span-1">
-          <IntradayBoost rows={pulse.intradayBoost} />
-        </div>
-        <div className="xl:col-span-1">
-          <TopLevelStocks rows={pulse.topLevel} />
-        </div>
-        <div className="xl:col-span-1">
-          <LowLevelStocks rows={pulse.lowLevel} />
-        </div>
-        <div className="xl:col-span-1">
-          <TopGainers rows={pulse.topGainers} />
-        </div>
-        <div className="xl:col-span-1">
-          <TopLosers rows={pulse.topLosers} />
-        </div>
-        <div className="xl:col-span-1 2xl:col-span-2">
-          <HighPowerStocks rows={pulse.highPower} />
-        </div>
+      <div className="grid min-h-0 flex-1 auto-rows-fr grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
+        <BreakoutBeacon
+          rows={pulse.breakouts}
+          source={data?.breakoutsSource}
+          sessionDate={data?.breakoutsSessionDate}
+        />
+        <IntradayBoost rows={pulse.intradayBoost} />
+        <TopLevelStocks rows={pulse.topLevel} />
+        <LowLevelStocks rows={pulse.lowLevel} />
+        <TopGainers rows={pulse.topGainers} />
+        <TopLosers rows={pulse.topLosers} />
+        <HighPowerStocks rows={pulse.highPower} />
       </div>
     </div>
   );
