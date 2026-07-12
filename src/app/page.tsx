@@ -1,10 +1,5 @@
-import { DashboardShell } from "@/components/DashboardShell";
-import { ScannerGrid } from "@/components/ScannerGrid";
+import { redirect } from "next/navigation";
 
 export default function HomePage() {
-  return (
-    <DashboardShell>
-      <ScannerGrid />
-    </DashboardShell>
-  );
+  redirect("/trade-desk");
 }

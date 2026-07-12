@@ -7,6 +7,7 @@ import {
   BarChart3,
   Clock,
   Layers,
+  LayoutDashboard,
   LineChart,
   Radar,
   TrendingUp,
@@ -15,7 +16,8 @@ import {
 import { cn } from "@/lib/utils";
 
 const stocksNav = [
-  { label: "Market Pulse", href: "/", icon: Activity, phase: 1 },
+  { label: "Trade Desk", href: "/trade-desk", icon: LayoutDashboard, phase: 3 },
+  { label: "Market Pulse", href: "/market-pulse", icon: Activity, phase: 1 },
   { label: "Insider Strategy", href: "/insider-strategy", icon: Radar, phase: 2 },
   { label: "Sector Scope", href: "/sector-scope", icon: Layers, phase: 2 },
   { label: "Swing Spectrum", href: "/swing-spectrum", icon: Waves, phase: 2 },
@@ -50,7 +52,10 @@ function NavGroup({
         {items.map((item) => {
           const Icon = item.icon;
           const enabled = item.href !== "#";
-          const active = enabled && pathname === item.href;
+          const active =
+            enabled &&
+            (pathname === item.href ||
+              (item.href === "/trade-desk" && pathname === "/"));
           const className = cn(
             "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
             active
@@ -107,7 +112,7 @@ export function Sidebar() {
       <NavGroup title="Stocks" items={stocksNav} pathname={pathname} />
       <NavGroup title="Index" items={indexNav} pathname={pathname} />
       <div className="mt-auto px-3 pt-4 text-[10px] leading-relaxed text-muted">
-        Phase 2 · Stocks tools live. Index tools next.
+        Trade Desk ranks Enter / Wait setups from live confluence.
       </div>
     </aside>
   );

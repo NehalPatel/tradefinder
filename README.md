@@ -13,7 +13,10 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Features
 
-### Phase 1 — Market Pulse (`/`)
+### Phase 3 — Trade Desk (`/` → `/trade-desk`)
+Ranked **ENTER / WAIT** equity setups with entry zone, invalidation, target, and confluence reasons.
+
+### Phase 1 — Market Pulse (`/market-pulse`)
 Breakout Beacon, Intraday Boost, Top/Low Level, Leaders Matrix
 
 ### Phase 2 — Stocks tools
@@ -21,7 +24,7 @@ Breakout Beacon, Intraday Boost, Top/Low Level, Leaders Matrix
 - **Sector Scope** (`/sector-scope`) — sector indices, sector momentum, hot stocks
 - **Swing Spectrum** (`/swing-spectrum`) — near 52W high/low + session momentum
 
-Index tools (Option Clock / Apex / Index Mover) remain Phase 3.
+Index tools (Option Clock / Apex / Index Mover) remain later.
 
 ## Data
 
