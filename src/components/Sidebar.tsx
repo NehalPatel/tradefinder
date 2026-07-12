@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Activity,
   BarChart3,
@@ -13,29 +15,31 @@ import {
 import { cn } from "@/lib/utils";
 
 const stocksNav = [
-  { label: "Market Pulse", href: "/", active: true, icon: Activity },
-  { label: "Insider Strategy", href: "#", active: false, icon: Radar },
-  { label: "Sector Scope", href: "#", active: false, icon: Layers },
-  { label: "Swing Spectrum", href: "#", active: false, icon: Waves },
+  { label: "Market Pulse", href: "/", icon: Activity, phase: 1 },
+  { label: "Insider Strategy", href: "/insider-strategy", icon: Radar, phase: 2 },
+  { label: "Sector Scope", href: "/sector-scope", icon: Layers, phase: 2 },
+  { label: "Swing Spectrum", href: "/swing-spectrum", icon: Waves, phase: 2 },
 ] as const;
 
 const indexNav = [
-  { label: "Option Clock", href: "#", active: false, icon: Clock },
-  { label: "Option Apex", href: "#", active: false, icon: BarChart3 },
-  { label: "Index Mover", href: "#", active: false, icon: TrendingUp },
+  { label: "Option Clock", href: "#", icon: Clock, phase: 3 },
+  { label: "Option Apex", href: "#", icon: BarChart3, phase: 3 },
+  { label: "Index Mover", href: "#", icon: TrendingUp, phase: 3 },
 ] as const;
 
 function NavGroup({
   title,
   items,
+  pathname,
 }: {
   title: string;
   items: readonly {
     label: string;
     href: string;
-    active: boolean;
     icon: React.ComponentType<{ className?: string }>;
+    phase: number;
   }[];
+  pathname: string;
 }) {
   return (
     <div className="mb-6">
@@ -45,30 +49,37 @@ function NavGroup({
       <ul className="space-y-0.5">
         {items.map((item) => {
           const Icon = item.icon;
-          return (
-            <li key={item.label}>
-              <a
-                href={item.active ? item.href : undefined}
-                aria-disabled={!item.active}
-                className={cn(
-                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-                  item.active
-                    ? "bg-border/50 text-foreground"
-                    : "cursor-not-allowed text-muted/70",
-                )}
-                title={item.active ? undefined : "Coming in a later phase"}
-                onClick={(e) => {
-                  if (!item.active) e.preventDefault();
-                }}
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span>{item.label}</span>
-                {!item.active && (
+          const enabled = item.href !== "#";
+          const active = enabled && pathname === item.href;
+          const className = cn(
+            "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+            active
+              ? "bg-border/50 text-foreground"
+              : enabled
+                ? "text-muted hover:bg-border/30 hover:text-foreground"
+                : "cursor-not-allowed text-muted/70",
+          );
+
+          if (!enabled) {
+            return (
+              <li key={item.label}>
+                <span className={className} title="Coming in a later phase">
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span>{item.label}</span>
                   <span className="ml-auto text-[9px] uppercase tracking-wide text-muted/60">
                     Soon
                   </span>
-                )}
-              </a>
+                </span>
+              </li>
+            );
+          }
+
+          return (
+            <li key={item.label}>
+              <Link href={item.href} className={className}>
+                <Icon className="h-4 w-4 shrink-0" />
+                <span>{item.label}</span>
+              </Link>
             </li>
           );
         })}
@@ -78,6 +89,8 @@ function NavGroup({
 }
 
 export function Sidebar() {
+  const pathname = usePathname();
+
   return (
     <aside className="flex h-full w-56 shrink-0 flex-col border-r border-border bg-[#0e0f15] px-2 py-4">
       <div className="mb-8 flex items-center gap-2 px-3">
@@ -88,13 +101,13 @@ export function Sidebar() {
           <p className="text-sm font-bold tracking-tight text-foreground">
             TradeFinder
           </p>
-          <p className="text-[10px] text-muted">Market Pulse</p>
+          <p className="text-[10px] text-muted">Live NSE scanners</p>
         </div>
       </div>
-      <NavGroup title="Stocks" items={stocksNav} />
-      <NavGroup title="Index" items={indexNav} />
+      <NavGroup title="Stocks" items={stocksNav} pathname={pathname} />
+      <NavGroup title="Index" items={indexNav} pathname={pathname} />
       <div className="mt-auto px-3 pt-4 text-[10px] leading-relaxed text-muted">
-        Phase 1 · Live NSE scan via Yahoo Finance. No simulated rows.
+        Phase 2 · Stocks tools live. Index tools next.
       </div>
     </aside>
   );

@@ -1,6 +1,6 @@
-# TradeFinder Market Pulse (Phase 1)
+# TradeFinder (Phase 1–2)
 
-Live NSE Market Pulse dashboard clone. Scanners use real Yahoo Finance quotes for a curated F&O / liquid universe — no mock rows.
+Live NSE scanner dashboard clone. All rows come from Yahoo Finance — no mock data.
 
 ## Setup
 
@@ -11,12 +11,23 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Features
+
+### Phase 1 — Market Pulse (`/`)
+Breakout Beacon, Intraday Boost, Top/Low Level, Leaders Matrix
+
+### Phase 2 — Stocks tools
+- **Insider Strategy** (`/insider-strategy`) — unusual volume + turnover footprint
+- **Sector Scope** (`/sector-scope`) — sector indices, sector momentum, hot stocks
+- **Swing Spectrum** (`/swing-spectrum`) — near 52W high/low + session momentum
+
+Index tools (Option Clock / Apex / Index Mover) remain Phase 3.
+
 ## Data
 
 - Quotes: Yahoo Finance (`SYMBOL.NS`) via server Route Handlers
-- Universe: ~180 NSE symbols in `src/lib/universe.ts`
-- Breakouts: first 15m candle high/low + volume vs expected session volume
-- Outside market hours: last available exchange-derived quotes; status shows Market Closed
+- Universe: NSE symbols in `src/lib/universe.ts`
+- Outside market hours: last available exchange-derived quotes
 
 ## Scripts
 
