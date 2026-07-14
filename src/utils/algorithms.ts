@@ -51,6 +51,11 @@ export function computeRFactor(
   return (quote.volume / expected) * volatilityCoeff;
 }
 
+/**
+ * One directional open-range signal per symbol.
+ * Side follows where LTP sits vs the open-15 range (not dayHigh/dayLow —
+ * those almost always pierce both sides and were creating BULL+BEAR duplicates).
+ */
 export function detectBreakout(
   quote: StockQuote,
   anchor: SessionAnchor,
@@ -62,14 +67,20 @@ export function detectBreakout(
 
   if (!volumeOk) return null;
 
-  // Use session extremes so completed (or late-day) breakouts still register,
-  // not only when LTP is still outside the open range.
-  const brokeBull =
-    quote.dayHigh > anchor.open15High || quote.ltp > anchor.open15High;
-  const brokeBear =
-    quote.dayLow < anchor.open15Low || quote.ltp < anchor.open15Low;
+  const brokeBull = quote.ltp > anchor.open15High;
+  const brokeBear = quote.ltp < anchor.open15Low;
 
-  if (!anchor.firedBull && brokeBull) {
+  // If somehow both (shouldn't with a valid range), pick by session direction.
+  let side: "BULL" | "BEAR" | null = null;
+  if (brokeBull && !brokeBear) side = "BULL";
+  else if (brokeBear && !brokeBull) side = "BEAR";
+  else if (brokeBull && brokeBear) {
+    side = quote.changePercent >= 0 ? "BULL" : "BEAR";
+  }
+
+  if (!side) return null;
+
+  if (side === "BULL" && !anchor.firedBull) {
     const signalPercent = quote.changePercent;
     const time = formatISTTime();
     markBreakout(quote.symbol, "BULL", signalPercent, time);
@@ -83,7 +94,7 @@ export function detectBreakout(
     };
   }
 
-  if (!anchor.firedBear && brokeBear) {
+  if (side === "BEAR" && !anchor.firedBear) {
     const signalPercent = quote.changePercent;
     const time = formatISTTime();
     markBreakout(quote.symbol, "BEAR", signalPercent, time);
@@ -100,6 +111,85 @@ export function detectBreakout(
   return null;
 }
 
+/** Prefer a single live signal per symbol matching current LTP / session bias. */
+function pickLiveBreakoutRow(
+  quote: StockQuote,
+  anchor: SessionAnchor,
+): BreakoutRow | null {
+  const preferBull =
+    quote.ltp > anchor.open15High ||
+    (quote.ltp >= anchor.open15Low && quote.changePercent >= 0);
+
+  if (preferBull && anchor.firedBull && anchor.bullTime != null) {
+    return {
+      signal: "BULL",
+      symbol: quote.symbol,
+      changePercent: quote.changePercent,
+      signalPercent: anchor.bullSignalPercent ?? quote.changePercent,
+      time: anchor.bullTime,
+      source: "live",
+    };
+  }
+
+  if (!preferBull && anchor.firedBear && anchor.bearTime != null) {
+    return {
+      signal: "BEAR",
+      symbol: quote.symbol,
+      changePercent: quote.changePercent,
+      signalPercent: anchor.bearSignalPercent ?? quote.changePercent,
+      time: anchor.bearTime,
+      source: "live",
+    };
+  }
+
+  // Fallback: whichever fire matches LTP / change, else the only one that fired.
+  if (anchor.firedBull && !anchor.firedBear && anchor.bullTime != null) {
+    return {
+      signal: "BULL",
+      symbol: quote.symbol,
+      changePercent: quote.changePercent,
+      signalPercent: anchor.bullSignalPercent ?? quote.changePercent,
+      time: anchor.bullTime,
+      source: "live",
+    };
+  }
+  if (anchor.firedBear && !anchor.firedBull && anchor.bearTime != null) {
+    return {
+      signal: "BEAR",
+      symbol: quote.symbol,
+      changePercent: quote.changePercent,
+      signalPercent: anchor.bearSignalPercent ?? quote.changePercent,
+      time: anchor.bearTime,
+      source: "live",
+    };
+  }
+  if (anchor.firedBull && anchor.firedBear) {
+    const useBull = quote.changePercent >= 0;
+    if (useBull && anchor.bullTime != null) {
+      return {
+        signal: "BULL",
+        symbol: quote.symbol,
+        changePercent: quote.changePercent,
+        signalPercent: anchor.bullSignalPercent ?? quote.changePercent,
+        time: anchor.bullTime,
+        source: "live",
+      };
+    }
+    if (anchor.bearTime != null) {
+      return {
+        signal: "BEAR",
+        symbol: quote.symbol,
+        changePercent: quote.changePercent,
+        signalPercent: anchor.bearSignalPercent ?? quote.changePercent,
+        time: anchor.bearTime,
+        source: "live",
+      };
+    }
+  }
+
+  return null;
+}
+
 /** Include previously fired session breakouts so the table stays populated. */
 export function collectBreakoutRows(
   quotes: StockQuote[],
@@ -107,6 +197,7 @@ export function collectBreakoutRows(
   sessionProgress: number,
 ): BreakoutRow[] {
   const rows: BreakoutRow[] = [];
+  const seen = new Set<string>();
 
   for (const quote of quotes) {
     const range = openRanges.get(quote.symbol);
@@ -114,34 +205,10 @@ export function collectBreakoutRows(
 
     const anchor = ensureAnchor(quote.symbol, range);
     const fresh = detectBreakout(quote, anchor, sessionProgress);
-    if (fresh) {
-      rows.push(fresh);
-      continue;
-    }
-
-    const current = getAnchor(quote.symbol);
-    if (!current) continue;
-
-    if (current.firedBull && current.bullTime != null) {
-      rows.push({
-        signal: "BULL",
-        symbol: quote.symbol,
-        changePercent: quote.changePercent,
-        signalPercent: current.bullSignalPercent ?? quote.changePercent,
-        time: current.bullTime,
-        source: "live",
-      });
-    }
-    if (current.firedBear && current.bearTime != null) {
-      rows.push({
-        signal: "BEAR",
-        symbol: quote.symbol,
-        changePercent: quote.changePercent,
-        signalPercent: current.bearSignalPercent ?? quote.changePercent,
-        time: current.bearTime,
-        source: "live",
-      });
-    }
+    const row = fresh ?? pickLiveBreakoutRow(quote, getAnchor(quote.symbol) ?? anchor);
+    if (!row || seen.has(row.symbol)) continue;
+    seen.add(row.symbol);
+    rows.push(row);
   }
 
   return rows.sort(

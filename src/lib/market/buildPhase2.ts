@@ -1,6 +1,6 @@
 import { getMarketStatus, formatISTDateTime } from "@/lib/market/ist";
 import { fetchUniverseQuotes } from "@/lib/market/yahoo";
-import { getSector, SECTOR_INDEX_QUOTES } from "@/lib/sectors";
+import { getSector, NSE_SECTORS, SECTOR_INDEX_QUOTES } from "@/lib/sectors";
 import type {
   InsiderRow,
   InsiderStrategyResponse,
@@ -109,7 +109,14 @@ function buildSectorSummaries(quotes: StockQuote[]): SectorSummary[] {
     });
   }
 
-  return summaries.sort((a, b) => b.avgChangePercent - a.avgChangePercent);
+  return summaries.sort((a, b) => {
+    const ai = NSE_SECTORS.indexOf(a.sector as (typeof NSE_SECTORS)[number]);
+    const bi = NSE_SECTORS.indexOf(b.sector as (typeof NSE_SECTORS)[number]);
+    const ao = ai === -1 ? 999 : ai;
+    const bo = bi === -1 ? 999 : bi;
+    if (ao !== bo) return ao - bo;
+    return b.avgChangePercent - a.avgChangePercent;
+  });
 }
 
 export async function buildSectorScope(): Promise<SectorScopeResponse> {

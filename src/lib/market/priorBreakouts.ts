@@ -135,11 +135,14 @@ function detectBreakoutsOnDay(
   const open15High = openBar.high;
   const open15Low = openBar.low;
   const dayOpen = openBar.open;
+  const lastClose = dayBars[dayBars.length - 1].close;
+  const dayChange =
+    dayOpen > 0 ? ((lastClose - dayOpen) / dayOpen) * 100 : 0;
+
+  // Prefer the signal that matches the day's net direction — one row only.
+  const preferBull = dayChange >= 0;
 
   let cumVol = 0;
-  let firedBull = false;
-  let firedBear = false;
-  const rows: BreakoutRow[] = [];
 
   for (let i = 0; i < dayBars.length; i++) {
     const bar = dayBars[i];
@@ -153,36 +156,36 @@ function detectBreakoutsOnDay(
     const changeFromOpen =
       dayOpen > 0 ? ((bar.close - dayOpen) / dayOpen) * 100 : 0;
 
-    if (!firedBull && bar.high > open15High) {
-      firedBull = true;
-      rows.push({
-        signal: "BULL",
-        symbol,
-        changePercent: changeFromOpen,
-        signalPercent: changeFromOpen,
-        time: formatISTClock(bar.date),
-        source: "prior",
-        sessionDate,
-      });
+    if (preferBull && bar.close > open15High) {
+      return [
+        {
+          signal: "BULL",
+          symbol,
+          changePercent: changeFromOpen,
+          signalPercent: changeFromOpen,
+          time: formatISTClock(bar.date),
+          source: "prior",
+          sessionDate,
+        },
+      ];
     }
 
-    if (!firedBear && bar.low < open15Low) {
-      firedBear = true;
-      rows.push({
-        signal: "BEAR",
-        symbol,
-        changePercent: changeFromOpen,
-        signalPercent: changeFromOpen,
-        time: formatISTClock(bar.date),
-        source: "prior",
-        sessionDate,
-      });
+    if (!preferBull && bar.close < open15Low) {
+      return [
+        {
+          signal: "BEAR",
+          symbol,
+          changePercent: changeFromOpen,
+          signalPercent: changeFromOpen,
+          time: formatISTClock(bar.date),
+          source: "prior",
+          sessionDate,
+        },
+      ];
     }
-
-    if (firedBull && firedBear) break;
   }
 
-  return rows;
+  return [];
 }
 
 /**
@@ -196,6 +199,7 @@ export async function getPriorDayBreakouts(
   const state = getPriorState(sessionDate);
 
   if (state.complete && state.rows.length > 0) {
+    state.rows = dedupeBreakoutsBySymbol(state.rows);
     return { rows: state.rows, priorDate: state.priorDate };
   }
 
@@ -234,6 +238,7 @@ export async function getPriorDayBreakouts(
     }),
   );
 
+  state.rows = dedupeBreakoutsBySymbol(state.rows);
   state.rows.sort(
     (a, b) => Math.abs(b.signalPercent) - Math.abs(a.signalPercent),
   );
@@ -243,4 +248,28 @@ export async function getPriorDayBreakouts(
   }
 
   return { rows: state.rows.slice(0, 40), priorDate: state.priorDate };
+}
+
+/** Keep a single signal per symbol (prefer matching day's % direction). */
+function dedupeBreakoutsBySymbol(rows: BreakoutRow[]): BreakoutRow[] {
+  const bySymbol = new Map<string, BreakoutRow>();
+  for (const row of rows) {
+    const existing = bySymbol.get(row.symbol);
+    if (!existing) {
+      bySymbol.set(row.symbol, row);
+      continue;
+    }
+    // Prefer signal that matches the row's changePercent direction.
+    const preferBull = row.changePercent >= 0;
+    const keep =
+      preferBull && row.signal === "BULL"
+        ? row
+        : !preferBull && row.signal === "BEAR"
+          ? row
+          : existing.signal === (preferBull ? "BULL" : "BEAR")
+            ? existing
+            : row;
+    bySymbol.set(row.symbol, keep);
+  }
+  return [...bySymbol.values()];
 }
